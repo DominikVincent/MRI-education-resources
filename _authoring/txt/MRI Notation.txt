@@ -1,0 +1,109 @@
+# MRI Notation and Terminology
+
+The following is the standardized notation used in this book:
+
+| Notation | Definition | SI Units |
+| --- | --- | --- |
+| $\vec{r} = [x, y, z]^T$ | position in space | [m] |
+| $\vec{B}(\vec{r},t)$ | Magnetic field | [T] |
+| $\bar{\gamma}$ | gyromagnetic ratio | [Hz/T] |
+| $B_0$ | Main magnetic field | [T] |
+| $B_1^+(\vec{r},t)$ | RF transmit magnetic field |[T] |
+| $B_1^-(\vec{r},t)$ | RF receive magnetic field |[T] |
+| $\vec{G}(t) = [G_X(t), G_Y(t), G_Z(t)]^T $ | magnetic field gradients | [T/m] |
+| $\vec{M}(\vec{r},t)$ | Net Magnetization | [T] |
+| $M_{XY}(\vec{r}, t) = M_X(\vec{r}, t) + i M_Y(\vec{r}, t)$ | transverse magnetization | [T] |
+| $M_0(\vec{r})$ | Equilibrium magnetization | [T] |
+| $T_1(\vec{r}), T_2(\vec{r}), T_2^*(\vec{r})$ | relaxation rates |[s] |
+
+<!-- 
+| $C_n(\vec{r})$ | receive coil sensitivity profile of the $n$th coil |
+| $\Delta f_r(\vec{r})$ | magnetic field inhomogeneity (macroscopic), including main field imperfections, and magnetic susceptibility effects |
+
+| $\Delta f_{cs}$ | frequency changes due to chemical shift |
+
+| $\vec{k}(t) $ |  k-space trajectory |
+| $BW_{rf}$ | RF pulse bandwidth |
+| TBW | Time-bandwidth product of a RF pulse shape |
+| $BW_{read}$ | Readout bandwidth during data acquisition |
+-->
+
+## Definitions
+
+### Position in space
+
+$$\vec{r} = 
+\begin{bmatrix}
+x\\
+y \\
+z 
+\end{bmatrix}$$
+
+
+### Net magnetization
+
+$$\vec{M} = 
+\begin{bmatrix}
+M_X \\
+M_Y \\
+M_Z 
+\end{bmatrix}$$
+
+It can vary over space, $\vec{r} = [x,y,z]^T$ and time, $t$:
+
+$$\vec{M}(\vec{r},t) = 
+\begin{bmatrix}
+M_X(\vec{r},t) \\
+M_Y(\vec{r},t) \\
+M_Z(\vec{r},t) 
+\end{bmatrix}$$
+
+Shorthand for transverse magnetization using complex numbers
+
+$$M_{XY}(\vec{r},t) = M_X(\vec{r},t) + i M_Y(\vec{r},t)$$
+
+
+### Magnetic field
+
+$$\vec{B} = 
+\begin{bmatrix}
+B_X \\
+B_Y \\
+B_Z 
+\end{bmatrix}$$
+
+It can vary over space, $\vec{r}$ and time, $t$:
+
+$$\vec{B}(\vec{r},t) = 
+\begin{bmatrix}
+B_X(\vec{r},t) \\
+B_Y(\vec{r},t) \\
+B_Z(\vec{r},t) 
+\end{bmatrix}$$
+
+## Acronyms
+
+MRI is full of jargon and acronyms, which can be intimidating and impede understanding.  Luckily, there are a couple good resources to help you out:
+
+Radiopaedia - general list: https://radiopaedia.org/articles/mri-pulse-sequence-abbreviations
+
+MR-TIP - structured lists comparing acronyms across vendors
+* https://mr-tip.com/serv1.php?type=cam
+* https://mr-tip.com/serv1.php?type=cam&sub=1
+
+## Glossary
+
+Spins - Nuclei with non-zero spin so they have a net magnetic moment
+
+Polarization - Alignment of spins in a magnetic field, resulting in a net magnetization
+
+RF - Radiofrequency
+
+Gradients - Magnetic field gradients
+
+Excitation - Flipping the net magnetization into the transverse plane with an RF pulse
+
+Refocusing - A 180 degree RF pulse used to refocus the effects of off-resonance in spin-echo sequences
+
+Voxel - Volume element
+

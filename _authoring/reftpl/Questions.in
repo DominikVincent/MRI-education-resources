@@ -1,0 +1,1028 @@
+<<<md>>>
+# MRI Practice Questions — with answers
+
+**Part:** Reference · **Reading time:** ~60–90 min to work through everything · **Pass 1 overview:** [[P1.1]] · [[P1.2]] · [[P1.3]] · [[P1.4]] · [[P1.5]] · **Refreshers you may want:** [[RM3]], [[RM4]], [[RP2]]
+
+These are all the practice questions of the original book, grouped by topic, plus extra questions on **hardware/engineering** and on **math & notation** at the end. **Questions may have more than one correct answer** — the answers say so explicitly. Each answer is hidden in a collapsible block: try first, then click "Answer". Every explanation links to the chapter where the topic is covered.
+
+Where the original's answer options contained typos (e.g. a missing minus sign in an exponent), the question is kept as written and the answer points the typo out.
+
+<<<code>>>
+import sys, os
+sys.path.insert(0, os.path.abspath(".."))   # make ../mri_tools.py importable
+import numpy as np
+import matplotlib.pyplot as plt
+import mri_tools as mt
+mt.setup_plots()
+%matplotlib inline
+
+<<<md>>>
+## 1. MRI system
+
+**Q1.1** Clinical MRI systems (i.e. 3 T and 1.5 T) operate in the same frequency range as …
+* (a) X-ray
+* (b) Visible light
+* (c) FM
+* (d) AM
+
+<details><summary>Answer</summary>
+
+**(c) FM.** The Larmor frequency is $f_0=\bar\gamma B_0$ = 63.9 MHz at 1.5 T and 127.7 MHz at 3 T — the VHF band around FM radio (88–108 MHz). AM radio is ≈ 0.5–1.7 MHz; visible light ≈ $5\times10^{14}$ Hz; X-rays ≳ $10^{17}$ Hz. This is why MRI rooms need RF shielding against broadcast radio. → [[A1]], [[B1]]
+
+</details>
+
+**Q1.2** The main magnetic field, $B_0$, is for …
+* (a) polarization
+* (b) excitation
+* (c) acquisition
+
+<details><summary>Answer</summary>
+
+**(a) polarization.** $B_0$ creates the net magnetization $M_0\propto B_0$. Excitation is done by the RF transmit field $B_1^+$, acquisition by the receive coils. (Of course $B_0$ is also what makes the spins precess at $f_0$ during acquisition, but the *purpose* of the main magnet is polarization.) → [[B1]]
+
+</details>
+
+**Q1.3** Which coil(s) generate magnetic field(s) that are perpendicular to the main field $B_0$?
+* (a) RF coils
+* (b) gradient coils in the x direction
+* (c) gradient coils in the y direction
+* (d) gradient coils in the z direction
+
+<details><summary>Answer</summary>
+
+**(a) RF coils only.** All three gradient coils produce a field whose relevant component is **along $z$** (parallel to $B_0$); "x-gradient" means $B_z$ *varies* with $x$. The RF field $B_1$ lies in the transverse ($x$–$y$) plane, which is necessary to tip $\vec M$. (Maxwell's equations force gradient coils to also produce small transverse "concomitant" fields, but these are a nuisance, not the purpose.) → [[B2]]
+
+</details>
+
+**Q1.4** (T/F) In MRI, the imaging plane is determined by proper assignment of the x, y, and z gradients.
+
+<details><summary>Answer</summary>
+
+**True.** Slice-select, phase-encode and readout are *logical* axes; by combining the physical $G_x, G_y, G_z$ coils the scanner can place them in any orientation (axial, sagittal, coronal, oblique) without moving the patient. → [[F1]], [[E2]]
+
+</details>
+
+**Q1.5** Match the following components with the approximate frequency and amplitude of their magnetic field.
+* Components: $B_0$, RF transmit coil, RF receive coil, magnetic field gradients
+* Frequency of magnetic field: 0 Hz, 1 kHz, 100 MHz
+* Amplitude of magnetic field: 1 µT, 10 µT, 10 mT, 1 T
+
+<details><summary>Answer</summary>
+
+| Component | Frequency | Amplitude |
+|---|---|---|
+| $B_0$ | 0 Hz (static) | ~1 T |
+| Gradients | ~1 kHz (switched every ~ms) | ~10 mT (e.g. 40 mT/m × 0.25 m at the FOV edge) |
+| RF transmit | ~100 MHz | ~10 µT |
+| RF receive | ~100 MHz | ~1 µT (smallest option) |
+
+The receive coil does not actively generate a field during reception: what it picks up is the tiny field of the precessing magnetization ($\mu_0M_0\approx10$ nT at 3 T inside the tissue, even less at the coil). Among the offered options, the smallest (1 µT) is the intended match. → [[B2]]
+
+</details>
+
+**Q1.6** Which of the following steps are conducted in a calibration (pre-)scan?
+* (a) Centre frequency / $B_0$ calibration
+* (b) RF power, transmit gain
+* (c) RF receiver gain
+* (d) Gradient calibration
+
+<details><summary>Answer</summary>
+
+**(a), (b) and (c)** — multiple answers. For each patient the scanner sets the centre frequency (and shims), calibrates the RF transmit gain so that a nominal 90° really is 90°, and sets the receiver gain so the ADC is not over- or under-driven. **(d)** gradient strength/linearity calibration is done at installation and during service, not per scan (although per-patient shimming uses gradient offsets). → [[B1]]
+
+</details>
+
+<<<md>>>
+## 2. MR physics
+
+**Q2.1** Which of the following isotopes **cannot** be imaged with MRI?
+* (a) $^1$H
+* (b) $^{12}$C
+* (c) $^{13}$C
+* (d) $^{19}$F
+* (e) $^2$H
+
+<details><summary>Answer</summary>
+
+**(b) $^{12}$C.** It has an even number of protons and neutrons, so spin $I=0$ and no magnetic moment. $^1$H, $^{13}$C, $^{19}$F (spin 1/2) and $^2$H (deuterium, spin 1) all have non-zero spin and are used in MRI/MRS (though all except ¹H give far less signal). → [[A1]], [[RP4]]
+
+</details>
+
+**Q2.2** Human tissue is …
+* (a) diamagnetic
+* (b) paramagnetic
+* (c) ferromagnetic
+
+<details><summary>Answer</summary>
+
+**(a) diamagnetic** (overall). Tissue is mostly water, $\chi\approx-9\times10^{-6}$. Some components are paramagnetic (deoxyhaemoglobin, ferritin/haemosiderin iron), which causes local susceptibility contrast, but no tissue is ferromagnetic. → [[A3]]
+
+</details>
+
+**Q2.3** (T/F) When placed in a magnetic field, all the protons ($^1$H) in the body will line up with the field.
+
+<details><summary>Answer</summary>
+
+**False.** Thermal motion keeps the orientations almost random; only a tiny excess — about 10 per million at 3 T and body temperature — is aligned (Boltzmann statistics). Individual spins also keep precessing rather than "lining up". → [[A1]], [[RP4]]
+
+</details>
+
+**Q2.4** (T/F) When placed in a magnetic field, spins are immediately preferentially aligned with that field.
+
+<details><summary>Answer</summary>
+
+**False.** Polarization builds up with the longitudinal relaxation time $T_1$: $M_z(t)=M_0(1-e^{-t/T_1})$. It takes several $T_1$ (seconds) to reach equilibrium. → [[A1]], [[A2]]
+
+</details>
+
+**Q2.5** (T/F) A spin's precession frequency (Larmor frequency) is proportional to the magnetic field it is in.
+
+<details><summary>Answer</summary>
+
+**True.** $f=\bar\gamma\lVert\vec B\rVert$ — the foundation of spatial encoding with gradients. → [[A1]]
+
+</details>
+
+**Q2.6** (T/F) The net magnetization, $\vec M$, does not precess at equilibrium.
+
+<details><summary>Answer</summary>
+
+**True.** At equilibrium $\vec M$ is parallel to $\vec B_0$, so the torque $\gamma\vec M\times\vec B=0$. Individual spins precess, but with random phases, so their transverse components cancel. → [[A1]], [[A2]]
+
+</details>
+
+**Q2.7** To create signals in MRI, we need to apply an RF pulse that is …
+* (a) perpendicular to the main field $B_0$, oscillating at frequency 0 Hz (static)
+* (b) parallel to the main field $B_0$, oscillating at frequency 0 Hz (static)
+* (c) parallel to the main field $B_0$, oscillating at a frequency $\gamma B_0$
+* (d) perpendicular to the main field $B_0$, oscillating at a frequency $\gamma B_0$
+
+<details><summary>Answer</summary>
+
+**(d).** Only a transverse field rotating at the Larmor frequency stays "in step" with the precessing spins and tips them (resonance). Strictly, $\gamma B_0$ is the *angular* frequency in rad/s; in Hz the frequency is $\bar\gamma B_0$. A field parallel to $B_0$ only changes the precession speed. → [[A1]], [[E1]]
+
+</details>
+
+**Q2.8** (T/F) The z-axis is the same in the lab and the rotating frame.
+
+<details><summary>Answer</summary>
+
+**True.** The rotating frame rotates *about* $z$, so only $x$ and $y$ change. → [[A2]]
+
+</details>
+
+<<<md>>>
+## 3. RF coils
+
+**Q3.1** (T/F) The RF receive coils detect magnetic flux directly when collecting signals.
+
+<details><summary>Answer</summary>
+
+**False.** By Faraday's law, a coil produces a voltage proportional to the *rate of change* of flux, $\mathcal E=-d\Phi_B/dt$. A static flux gives no signal; the precessing $\vec M$ produces an oscillating flux, and that induces the measured voltage. → [[RP2]], [[B2]]
+
+</details>
+
+**Q3.2** What are the benefit(s) of using phased-array receive coils?
+* (a) Increase FOV
+* (b) Increase SNR
+* (c) Enables parallel imaging acceleration
+* (d) Enables compressed sensing acceleration
+
+<details><summary>Answer</summary>
+
+**(a), (b) and (c).** Many small elements each have high SNR near themselves; combined they give high SNR over a large coverage area (larger FOV than a single small coil at the same SNR). Their distinct sensitivity profiles also provide the spatial information used by parallel imaging. **(d)** is not a benefit specific to arrays: compressed sensing works with single-channel data (although it is often combined with parallel imaging). → [[B5]], [[H3]]
+
+</details>
+
+<<<md>>>
+## 4. Contrast
+
+**Q4.1** (T/F) Proton density represents the density of all the protons in a given tissue.
+
+<details><summary>Answer</summary>
+
+**False.** It reflects only MR-visible, mobile protons (mostly water and fat). Protons in macromolecules, membranes or bone mineral have $T_2$ of microseconds and have decayed before any normal echo time. → [[D1]]
+
+</details>
+
+**Q4.2** The recovery of longitudinal magnetization is proportional to …
+* (a) $e^{t/T_1}$
+* (b) $1-e^{t/T_1}$
+* (c) $e^{t/T_2}$
+* (d) $1-e^{t/T_2}$
+
+<details><summary>Answer</summary>
+
+**(b), with the missing minus sign:** $M_z\propto1-e^{-t/T_1}$ (starting from $M_z=0$). All options in the original lack the minus sign in the exponent — $e^{+t/T}$ would grow without bound. → [[A2]], [[D1]]
+
+</details>
+
+**Q4.3** The decay of the transverse magnetization is proportional to …
+* (a) $e^{t/T_1}$
+* (b) $1-e^{t/T_1}$
+* (c) $e^{t/T_2}$
+* (d) $1-e^{t/T_2}$
+
+<details><summary>Answer</summary>
+
+**(c), with the missing minus sign:** $M_{xy}\propto e^{-t/T_2}$ (or $e^{-t/T_2^*}$ without refocusing). → [[A2]]
+
+</details>
+
+**Q4.4** (T/F) The amplitude of the net magnetization doesn't change during relaxation.
+
+<details><summary>Answer</summary>
+
+**False.** $M_{xy}$ decays with $T_2$ while $M_z$ recovers with the longer $T_1$, so $\lvert\vec M\rvert$ first shrinks and only later returns to $M_0$. (Even if $T_1=T_2$, $\lvert\vec M\rvert<M_0$ during recovery.) Relaxation is not a rotation. → [[A2]]
+
+</details>
+
+**Q4.5** Which of the following relations is correct?
+* (a) $T_2 \ge T_2^* \ge T_1$
+* (b) $T_2^* \ge T_2 \ge T_1$
+* (c) $T_1 \ge T_2 \ge T_2^*$
+* (d) $T_1 \ge T_2^* \ge T_2$
+
+<details><summary>Answer</summary>
+
+**(c) $T_1\ge T_2\ge T_2^*$.** $T_2^*$ adds inhomogeneity dephasing ($1/T_2^*=1/T_2+1/T_2'$), so it is shortest; and $T_2\le T_1$ always holds for physical reasons (strictly $T_2\le2T_1$; in tissue $T_2\ll T_1$). → [[D2]]
+
+</details>
+
+**Q4.6** $T_2^*$ relaxation depends on …
+* (a) magnetic field inhomogeneities
+* (b) spin–spin interactions
+* (c) spin–lattice interactions
+* (d) longitudinal relaxation
+
+<details><summary>Answer</summary>
+
+**(a) and (b).** $1/T_2^*=1/T_2+1/T_2'$: the $T_2$ part is due to spin–spin interactions, $T_2'$ to field inhomogeneity. (Pedantic note: processes that cause $T_1$ also contribute a little to $T_2$, but (c)/(d) are not the intended answers.) → [[D2]]
+
+</details>
+
+**Q4.7** (T/F) $M_z$ doesn't contribute to the MR signal.
+
+<details><summary>Answer</summary>
+
+**True.** Only transverse magnetization precesses and induces a voltage at the Larmor frequency. $M_z$ matters indirectly: it is what the *next* RF pulse turns into signal. → [[A1]], [[C1]]
+
+</details>
+
+**Q4.8** Calculate the signal in a spin-echo sequence with a 90° flip angle, $M_0(1-e^{-TR/T_1})e^{-TE/T_2}$, when TR = ∞.
+* (a) $M_0$  (b) $0$  (c) $M_0(1-e^{-TR/T_1})$  (d) $M_0e^{-TE/T_2}$
+
+<details><summary>Answer</summary>
+
+**(d) $M_0e^{-TE/T_2}$.** With infinite TR, $M_z$ fully recovers ($e^{-\infty}=0$), so there is no $T_1$ weighting — a pure $T_2$ (or PD for short TE) weighting. → [[D1]]
+
+</details>
+
+**Q4.9** Same signal equation, now TE = ∞.
+* (a) $M_0$  (b) $0$  (c) $M_0(1-e^{-TR/T_1})$  (d) $M_0e^{-TE/T_2}$
+
+<details><summary>Answer</summary>
+
+**(b) 0.** Everything has decayed by $T_2$ relaxation by the time of an infinitely late echo. → [[D1]]
+
+</details>
+
+**Q4.10** A longer TR …
+* (a) increases $T_1$ weighting  (b) reduces $T_1$ weighting  (c) increases $T_2$ weighting  (d) reduces $T_2$ weighting
+
+<details><summary>Answer</summary>
+
+**(b) reduces $T_1$ weighting.** With longer TR all tissues recover more fully, so $T_1$ differences matter less. TR does not change $T_2$ weighting (TE does). → [[D1]]
+
+</details>
+
+**Q4.11** A longer TE …
+* (a) increases $T_1$ weighting  (b) reduces $T_1$ weighting  (c) increases $T_2$ weighting  (d) reduces $T_2$ weighting
+
+<details><summary>Answer</summary>
+
+**(c) increases $T_2$ weighting** (or $T_2^*$ weighting for gradient echoes). → [[D1]]
+
+</details>
+
+**Q4.12** What flip angle gives the highest SNR for a spoiled gradient-echo pulse sequence?
+* (a) 45°  (b) 90°  (c) 180°  (d) $\cos^{-1}(\exp(-TR/T_1))$
+
+<details><summary>Answer</summary>
+
+**(d) the Ernst angle**, $\theta_E=\arccos(e^{-TR/T_1})$. It approaches 90° only when $TR\gg T_1$. The cell below checks it numerically. → [[D1]]
+
+</details>
+
+**Q4.13** The signal of an inversion-recovery pulse sequence in the steady state is proportional to …
+* (a) $M_0(1-2e^{-TI/T_1})$
+* (b) $M_0(1-e^{-TR/T_1})$
+* (c) $M_0(1-e^{-TI/T_1}+e^{-TR/T_1})$
+* (d) $M_0(1-2e^{-TI/T_1}+e^{-TR/T_1})$
+
+<details><summary>Answer</summary>
+
+**(d).** (Assuming a perfect 180°, a 90° readout that saturates $M_z$, and $TE\ll TR$.) Option (a) is the limit $TR\to\infty$. → [[D1]]
+
+</details>
+
+**Q4.14** (T/F) In a spin-echo sequence, the dephasing of spins in the transverse plane is only eliminated at the spin echo.
+
+<details><summary>Answer</summary>
+
+**True.** The 180° pulse reverses the accumulated off-resonance phase; the phases re-align only at $t=TE=2\tau$ and fan out again afterwards. (Irreversible $T_2$ dephasing is never eliminated.) → [[D3]]
+
+</details>
+
+**Q4.15** Which of the following image contrasts can be generated by a spin-echo pulse sequence?
+* (a) PDw  (b) T1w  (c) T2w  (d) T2*w
+
+<details><summary>Answer</summary>
+
+**(a), (b) and (c).** Long TR/short TE → PD; short TR/short TE → $T_1$; long TR/long TE → $T_2$. A spin echo refocuses the inhomogeneity dephasing, so it does **not** give $T_2^*$ weighting (unless the readout is deliberately shifted away from the echo). → [[D1]], [[D3]]
+
+</details>
+
+**Q4.16** What magnetic resonance property is used to perform fat/water (Dixon) imaging?
+* (a) Proton density  (b) $T_1$  (c) $T_2$  (d) $T_2^*$  (e) Chemical shift
+
+<details><summary>Answer</summary>
+
+**(e) chemical shift.** Fat precesses ≈ 3.5 ppm slower than water, so the two signals change their relative phase with TE. → [[D2]]
+
+</details>
+
+**Q4.17** What are the minimum measurements required to create separate fat and water images?
+* (a) In-phase TE  (b) Out-of-phase TE  (c) In-phase TE & out-of-phase TE
+
+<details><summary>Answer</summary>
+
+**(c) both.** Water $=\frac12(S_{in}+S_{out})$, fat $=\frac12(S_{in}-S_{out})$ (the original's formulas omit the factor ½). In practice, $B_0$ inhomogeneity adds unknown phase, so robust methods use three or more echoes or more elaborate models. → [[D2]]
+
+</details>
+
+**Q4.18** What is "magnetization preparation" used for?
+* (a) polarization  (b) data acquisition  (c) create additional contrast  (d) tissue suppression
+
+<details><summary>Answer</summary>
+
+**(c) and (d).** E.g. inversion recovery for $T_1$ contrast (MPRAGE), FLAIR/STIR to null fluid or fat, $T_2$-preparation, fat saturation. → [[H2]], [[D1]]
+
+</details>
+
+**Q4.19** (T/F) Multiple readouts can be used following a magnetization preparation pulse to improve efficiency.
+
+<details><summary>Answer</summary>
+
+**True.** That is exactly MPRAGE / TurboFLASH / TFE: one preparation followed by a train of fast gradient-echo readouts. → [[H2]]
+
+</details>
+
+<<<md>>>
+The following cell checks Q4.12 numerically: it maximizes the spoiled-GRE signal over flip angle by brute force and compares with the Ernst formula.
+
+<<<code>>>
+TR, T1 = 20e-3, 1.0                          # [s]
+flips = np.deg2rad(np.linspace(0.1, 90, 9000))
+S = mt.spoiled_gre_signal(flips, TE=0.0, TR=TR, T1=T1, T2star=np.inf)
+print(f"brute-force optimum: {np.rad2deg(flips[np.argmax(S)]):.2f} deg;  Ernst formula: {np.rad2deg(mt.ernst_angle(TR, T1)):.2f} deg")
+
+<<<md>>>
+Interpretation: both give ≈ 11.4° for TR = 20 ms and $T_1$ = 1 s — far from 90°.
+
+<<<md>>>
+## 5. Pulse sequence
+
+**Q5.1** Which of the following are typically components of a pulse-sequence diagram?
+* (a) RF pulses  (b) Main field ($B_0$)  (c) Magnetic field gradients ($G_X, G_Y, G_Z$)  (d) Data acquisition (DAQ)
+
+<details><summary>Answer</summary>
+
+**(a), (c) and (d).** $B_0$ is always on and constant, so it is not drawn. → [[C1]]
+
+</details>
+
+**Q5.2** In the typical pulse sequence below, identify the gradients that serve the following functions:
+1. spoil transverse magnetization
+2. refocus $M_{xy}$ phase across the slice
+3. move to the edge of k-space
+
+![2D FT sequence](../images/pulse_sequence-diagram.png)
+
+<details><summary>Answer</summary>
+
+1. **Spoiling:** the large positive $G_Z$ lobe *after* the readout (a crusher/spoiler).
+2. **Slice refocusing:** the negative $G_Z$ lobe right after the slice-selective RF pulse (the slice-select "rephaser").
+3. **Moving to the edge of k-space:** the negative $G_X$ prephasing lobe (to $-k_{x,max}$) together with the $G_Y$ phase-encoding lobe (to the desired $k_y$ line), both before the DAQ window.
+
+(The $G_X$ and $G_Y$ lobes after the readout are rewinders that return to the k-space centre.) → [[C1]], [[F2]], [[E2]]
+
+</details>
+
+**Q5.3** Which of the following statements is true for the slice-select refocusing gradient?
+* (a) It must have the same gradient amplitude as the slice-selective excitation gradient.
+* (b) It must have the same gradient area as the slice-selective excitation gradient.
+* (c) It can overlap with the prewinder of the frequency-encoding gradient.
+* (d) It can overlap with the gradient echo.
+
+<details><summary>Answer</summary>
+
+**(c) only.** Its *area* must be about **minus half** the area of the slice-select lobe (the dephasing accumulated from the pulse centre to the end of the pulse), so (b) is false as worded and (a) is irrelevant (any amplitude/duration with the right area works). It can run simultaneously with the readout prewinder and phase-encode lobes (different axes), but it must be finished before the echo is read out, otherwise it would add an unwanted $k_z$ variation during the readout (d). → [[E2]]
+
+</details>
+
+**Q5.4** (T/F) For 2D FT imaging, gradient spoiling is usually applied in the slice-select direction because the voxel size is larger, thus more dephasing can happen within a voxel in that direction.
+
+<details><summary>Answer</summary>
+
+**True.** Spoiling needs several cycles of phase across a voxel, i.e. a gradient area $\gtrsim n/(\bar\gamma\,\delta)$; the thicker the voxel ($\delta_z$ of several mm vs ~1 mm in-plane), the less area is needed. → [[H2]]
+
+</details>
+
+**Q5.5** (T/F) For a GRE or SE with no phase-encoding gradient, the k-space position at TE equals 0 (i.e. $\vec k(TE)=0$).
+
+<details><summary>Answer</summary>
+
+**True.** TE is *defined* as the time when the readout passes the centre of k-space (net gradient area zero; for SE taking into account that the 180° pulse reflects $\vec k\to-\vec k$). → [[C1]], [[F2]]
+
+</details>
+
+<<<md>>>
+## 6. RF pulses
+
+**Q6.1** What is the flip angle $\theta$ (in radians) of a constant-amplitude (hard) RF pulse with amplitude $B_{1,0}$ and duration $\tau$?
+* (a) $\theta=\gamma B_{1,0}\tau$  (b) $\theta=\gamma B_0\tau$  (c) $\theta=B_{1,0}\tau$  (d) $\theta=\gamma\tau$
+
+<details><summary>Answer</summary>
+
+**(a).** In the rotating frame $\vec M$ precesses about $B_1$ at $\omega_1=\gamma B_{1,0}$ (rad/s) for time $\tau$. Using $\bar\gamma$ would give the answer in cycles instead of radians. → [[E1]]
+
+</details>
+
+**Q6.2** (T/F) When describing RF excitation, we usually neglect the relaxation terms in the Bloch equation because the RF pulse duration is much shorter than the relaxation time constants.
+
+<details><summary>Answer</summary>
+
+**True** (usually): pulses last ~0.1–5 ms while $T_1$, $T_2$ are tens of ms to seconds. Exceptions: long adiabatic/spectral pulses, or very short-$T_2$ tissues (tendon, bone). → [[E1]]
+
+</details>
+
+**Q6.3** (T/F) A constant-amplitude 180° pulse that has the same duration as a constant-amplitude 90° pulse requires twice the power.
+
+<details><summary>Answer</summary>
+
+**False — four times.** The amplitude must double ($\theta=\gamma B_1\tau$), and power (and SAR) scales with $B_1^2$. → [[E1]], [[B6]]
+
+</details>
+
+**Q6.4** In slice-selective excitation, thinner slices can be achieved by …
+* (a) decreasing the RF pulse bandwidth $BW_{rf}$
+* (b) decreasing the receive bandwidth
+* (c) decreasing the slice-select gradient strength
+* (d) increasing the slice-select gradient strength
+
+<details><summary>Answer</summary>
+
+**(a) and (d)**, from $\Delta z=BW_{rf}/(\bar\gamma G_{z,SS})$. The receive bandwidth has nothing to do with the slice. → [[E2]]
+
+</details>
+
+<<<md>>>
+## 7. Spatial encoding
+
+**Q7.1** (T/F) During frequency encoding, the MRI signal is in the time domain, corresponding to the spatial-frequency domain. The Fourier transform of the signal is in the frequency domain, which corresponds to the image domain.
+
+<details><summary>Answer</summary>
+
+**True.** With a constant readout gradient, time maps linearly to $k_x$ ($k_x=\bar\gamma G_{x,r}t$) and temporal frequency maps to position ($x=f/(\bar\gamma G_{x,r})$). → [[F1]], [[C2]]
+
+</details>
+
+**Q7.2** When is the slice-selective gradient turned on?
+* (a) during the RF excitation pulse  (b) between the RF excitation and the readout  (c) during the echo (readout)
+
+<details><summary>Answer</summary>
+
+**(a)** — during the RF pulse. (Its refocusing lobe follows immediately after, i.e. partly in (b).) → [[E2]]
+
+</details>
+
+**Q7.3** When is the frequency-encoding gradient turned on?
+* (a) during the RF excitation pulse  (b) between the RF excitation and the readout  (c) during the echo (readout)
+
+<details><summary>Answer</summary>
+
+**(c)** — during the readout. Its negative prephasing lobe is applied in (b), so (b) is also defensible for the readout *axis*. → [[F1]]
+
+</details>
+
+**Q7.4** When is the phase-encoding gradient turned on?
+* (a) during the RF excitation pulse  (b) between the RF excitation and the readout  (c) during the echo (readout)
+
+<details><summary>Answer</summary>
+
+**(b)** — between excitation and readout (in Cartesian 2DFT). → [[F1]]
+
+</details>
+
+**Q7.5** When is DAQ turned on during a 2D FT sequence?
+* (a) when the slice-selective gradient is on  (b) when the RF is on  (c) when the phase-encoding gradient is on  (d) when the frequency-encoding gradient is on
+
+<details><summary>Answer</summary>
+
+**(d).** Data are sampled during the readout (frequency-encoding) gradient. → [[C1]], [[F1]]
+
+</details>
+
+**Q7.6** According to the Nyquist theorem, to avoid aliasing:
+* (a) the sampling frequency must be at least half the highest frequency in the signal
+* (b) the sampling frequency must be at least twice the lowest frequency in the signal
+* (c) the sampling frequency must be at least twice the highest frequency in the signal
+* (d) the sampling frequency must be at least half the lowest frequency in the signal
+
+<details><summary>Answer</summary>
+
+**(c).** In MRI terms (complex sampling of frequencies from $-BW/2$ to $+BW/2$): sampling rate $1/\Delta t\ge BW$, equivalently $\Delta k\le1/\text{(object size)}$. → [[RM5]], [[G1]]
+
+</details>
+
+**Q7.7** (T/F) Aliasing occurs because of oversampling.
+
+<details><summary>Answer</summary>
+
+**False** — because of **under**sampling (k-space samples too far apart, FOV smaller than the object). Oversampling is actually a remedy. → [[G1]], [[I2]]
+
+</details>
+
+**Q7.8** (T/F) During 2D multislice imaging, acquisition for one slice must be completed before acquisition of the next slice can start.
+
+<details><summary>Answer</summary>
+
+**False.** Slices are interleaved: during the long TR of one slice, other slices are excited and read out. → [[H1]]
+
+</details>
+
+**Q7.9** Which k-space line is acquired by the following magnetic field gradients?
+
+![k-space line sampling](../images/kspace_line_question.png)
+
+<details><summary>Answer</summary>
+
+**Line ③.** The simultaneous negative $G_x$ and negative $G_y$ lobes move $\vec k$ to $(-k_x, -k_y)$; the positive $G_x$ during DAQ then sweeps horizontally in $+k_x$ at that negative $k_y$ — the horizontal line *below* the $k_x$ axis. The final lobes rewind back toward the centre. Line ④ (vertical) would require the readout on $G_y$. → [[F2]]
+
+</details>
+
+**Q7.10** In 3DFT imaging, the gradient added to the slice-encoding axis (compared to 2DFT) is a …
+* (a) frequency-encoding gradient  (b) phase-encoding gradient  (c) either
+
+<details><summary>Answer</summary>
+
+**(b) phase-encoding gradient.** There can only be one frequency-encoding (readout) direction per readout, so the second and third dimensions are phase encoded. → [[H1]]
+
+</details>
+
+<<<md>>>
+## 8. Image reconstruction
+
+**Q8.1** For a real-valued image $m(x,y)$, which of the following equations holds for its k-space data $M(k_x,k_y)$?
+* (a) $M(k_x,k_y)=M(-k_x,-k_y)$
+* (b) $M(k_x,k_y)=-M(-k_x,-k_y)$
+* (c) $\Re\{M(k_x,k_y)\}=\Re\{M(-k_x,-k_y)\}$
+* (d) $\Im\{M(k_x,k_y)\}=\Im\{M(-k_x,-k_y)\}$
+
+<details><summary>Answer</summary>
+
+**(c).** A real image has conjugate-symmetric k-space, $M(-\vec k)=M^*(\vec k)$: the real part is even and the imaginary part is **odd**, $\Im\{M(\vec k)\}=-\Im\{M(-\vec k)\}$ — so (d) is false. (a) would additionally require the image to be symmetric, $m(x,y)=m(-x,-y)$. The cell below verifies this numerically. → [[RM4]], [[H3]]
+
+</details>
+
+**Q8.2** (T/F) In MRI we only look at magnitude images.
+
+<details><summary>Answer</summary>
+
+**False.** Phase is used in phase-contrast flow imaging, susceptibility-weighted imaging and QSM, Dixon fat/water separation, $B_0$ field mapping, MR thermometry, and phase-sensitive inversion recovery. → [[D2]], [[F3]]
+
+</details>
+
+**Q8.3** (T/F) The centre of k-space always contains the maximum signal.
+
+<details><summary>Answer</summary>
+
+**False** (usually, but not always). $M(\vec 0)=\int m(\vec r)d\vec r$; for a non-negative real image this is indeed the largest magnitude. But with phase variations (e.g. off-resonance, or flow), signed images (inversion recovery with positive and negative $M_z$), or an echo shifted by off-resonance/eddy currents, the peak can lie elsewhere or the centre can even be near zero. → [[F2]]
+
+</details>
+
+<<<code>>>
+# Numerical check of Q8.1 (conjugate symmetry of the FT of a real image)
+img = mt.shepp_logan(64)                            # real-valued image
+K = mt.fft2c(img)                                   # centered: k = 0 at index N//2
+N = K.shape[0]
+idx = (N - np.arange(N)) % N                         # index of -k for each k (even N; index 0 = unpaired -N/2 row)
+Kneg = K[np.ix_(idx, idx)]                           # M(-kx, -ky)
+inner = (slice(1, None), slice(1, None))             # drop the unpaired -N/2 row/column
+print("max |Re M(k) - Re M(-k)| =", np.abs(K.real - Kneg.real)[inner].max())
+print("max |Im M(k) + Im M(-k)| =", np.abs(K.imag + Kneg.imag)[inner].max(), "(imaginary part is odd)")
+print("max |Im M(k) - Im M(-k)| =", np.abs(K.imag - Kneg.imag)[inner].max(), "(so option (d) is false)")
+
+<<<md>>>
+Interpretation: the real part is symmetric and the imaginary part antisymmetric to machine precision, while option (d) fails by a large margin.
+
+<<<md>>>
+## 9. Image characteristics (FOV and resolution)
+
+**Q9.1** The field of view is inversely proportional to …
+* (a) receiver BW (RBW)  (b) readout gradient strength ($G_{xr}$)  (c) TR  (d) TE
+
+<details><summary>Answer</summary>
+
+**(b).** $FOV_x=\dfrac{1}{\bar\gamma G_{xr}\Delta t}=\dfrac{BW_{read}}{\bar\gamma G_{xr}}$: a stronger gradient spreads the same bandwidth over a smaller distance. TR and TE do not affect FOV. → [[G3]]
+
+</details>
+
+**Q9.2** The field of view is directly proportional to …
+* (a) receiver BW (RBW)  (b) readout gradient strength ($G_{xr}$)  (c) TR  (d) TE
+
+<details><summary>Answer</summary>
+
+**(a)** — at fixed gradient, a wider receiver bandwidth (shorter dwell time, smaller $\Delta k_x$) covers a larger FOV. → [[G3]]
+
+</details>
+
+**Q9.3** (T/F) An anti-aliasing filter can be applied in the phase-encoding direction.
+
+<details><summary>Answer</summary>
+
+**False.** The analog anti-aliasing filter acts on the time signal during each readout, i.e. along the frequency-encoding direction only. Phase-encoding samples come from different TRs, so there is no continuous signal to filter — hence aliasing (wrap-around) appears in the phase-encode direction. → [[I2]], [[G1]]
+
+</details>
+
+**Q9.4** The resolution in the frequency-encoding direction ($\delta_x$) is equal to …
+* (a) $\dfrac{1}{W_{kx}}$  (b) $\dfrac{1}{\frac{\gamma}{2\pi}G_{xr}t_{read}}$  (c) $\dfrac{FOV_x}{N_{FE}}$  (d) none of the above
+
+<details><summary>Answer</summary>
+
+**(a), (b) and (c)** — all three are the same quantity: $W_{kx}=2k_{x,max}=\bar\gamma G_{xr}T_{read}$ is the width of sampled k-space, and $FOV_x/N_{FE}=1/(N_{FE}\Delta k_x)=1/W_{kx}$. → [[G1]], [[G3]]
+
+</details>
+
+<<<md>>>
+## 10. SNR
+
+**Q10.1** SNR can be increased by …
+* (a) decreasing voxel size  (b) increasing total time  (c) increasing NEX
+
+<details><summary>Answer</summary>
+
+**(b) and (c).** $SNR\propto\text{voxel volume}\cdot\sqrt{T_{meas}}$: more sampling time (e.g. more averages, lower bandwidth) increases SNR as the square root; *smaller* voxels decrease SNR linearly. → [[G2]]
+
+</details>
+
+<<<md>>>
+## 11. Artifacts
+
+**Q11.1** The chemical-shift displacement artifact is characterized by …
+* (a) signal stretch and pile-up  (b) bright and dark bands  (c) Gibbs ringing  (d) ghosting
+
+<details><summary>Answer</summary>
+
+**(b) bright and dark bands.** Fat is shifted by a *constant* amount along the readout: where it overlaps water there is a bright band, where it moved away there is a dark gap. → [[I2]]
+
+</details>
+
+**Q11.2** The susceptibility displacement artifact is characterized by …
+* (a) signal stretch and pile-up  (b) bright and dark bands  (c) Gibbs ringing  (d) ghosting
+
+<details><summary>Answer</summary>
+
+**(a) signal stretch and pile-up.** Susceptibility off-resonance varies smoothly in space, so the shift varies too: the image is locally stretched (dark) or compressed (bright pile-up), e.g. near sinuses in EPI. → [[I2]]
+
+</details>
+
+**Q11.3** Truncation artifacts can be reduced by …
+* (a) improving resolution  (b) filtering in k-space  (c) increasing FOV  (d) increasing NEX
+
+<details><summary>Answer</summary>
+
+**(a) and (b).** Sampling further out in k-space (higher $k_{max}$) makes the ringing finer and less visible; windowing (apodizing) k-space suppresses it at the cost of some blur. FOV and averaging do not help. → [[I1]], [[I2]]
+
+</details>
+
+**Q11.4** (T/F) Motion artifacts occur only along the phase-encoding direction.
+
+<details><summary>Answer</summary>
+
+**False.** In Cartesian imaging they appear *predominantly* along phase encoding (each PE line is acquired in a different TR, seconds apart, while a readout takes milliseconds). But motion also causes blurring, misregistration of flowing spins along the readout (oblique-flow displacement), through-plane effects, and streaks in all directions for radial/spiral sampling. → [[I2]]
+
+</details>
+
+<<<md>>>
+## 12. Fast imaging pulse sequences
+
+**Q12.1** What does it mean to use a multiple spin-echo pulse sequence?
+* (a) multiple spin echoes are created following a single excitation pulse
+* (b) multiple k-space lines acquired sequentially
+* (c) multiple gradient-echo repetitions after a magnetization preparation pulse
+* (d) fully refocused gradients and no spoiling in every TR
+
+<details><summary>Answer</summary>
+
+**(a).** Each refocusing pulse produces a new spin echo, each used for a different k-space line (so FSE also acquires several lines per TR, but (b) is the defining description of EPI). (c) describes MPRAGE-type sequences, (d) bSSFP. → [[H2]]
+
+</details>
+
+**Q12.2** What types of contrast can be created with a multiple spin-echo pulse sequence?
+* (a) PD-weighted  (b) $T_1$-weighted  (c) $T_2$-weighted  (d) $T_2^*$-weighted
+
+<details><summary>Answer</summary>
+
+**(a), (b) and (c)** via TR and the effective TE (short ETL and short TR for $T_1$w). Not $T_2^*$, because every echo is refocused. → [[H2]]
+
+</details>
+
+**Q12.3** What are the limitations of multiple spin-echo pulse sequences?
+* (a) chemical-shift and susceptibility displacement artifacts  (b) $T_2$ blurring artifacts  (c) ghosting  (d) SAR
+
+<details><summary>Answer</summary>
+
+**(b) and (d).** Signal decays along the echo train, which acts as a k-space filter (blurring), and the many 180° refocusing pulses deposit a lot of RF energy. FSE is robust against displacement artifacts (unlike EPI); ghosting is not specific to it. → [[H2]]
+
+</details>
+
+**Q12.4** What does it mean to use echo-planar imaging (EPI)?
+* (a) multiple spin echoes following a single excitation  (b) multiple k-space lines acquired sequentially  (c) multiple gradient-echo repetitions after a magnetization preparation pulse  (d) fully refocused gradients and no spoiling in every TR
+
+<details><summary>Answer</summary>
+
+**(b).** After one excitation, an alternating readout gradient forms a train of gradient echoes, each a new k-space line, stepped by small phase-encoding "blips". → [[H2]]
+
+</details>
+
+**Q12.5** What are the advantages of EPI?
+* (a) create additional $T_1$, $T_2$ and/or $T_2^*$ contrast  (b) rapidly acquire k-space  (c) robust to motion  (d) repeated refocusing of intravoxel dephasing
+
+<details><summary>Answer</summary>
+
+**(b) and (c).** A single-shot image takes ~50–100 ms, which "freezes" motion. EPI itself does not add contrast (that comes from preparation, e.g. diffusion gradients) and gradient echoes do not refocus dephasing. → [[H2]]
+
+</details>
+
+**Q12.6** What are the artifacts associated with EPI?
+* (a) chemical-shift displacement  (b) distortion due to magnetic-susceptibility differences  (c) $T_2^*$ blurring  (d) ghosting
+
+<details><summary>Answer</summary>
+
+**All four.** The low phase-encode bandwidth causes large fat shifts and susceptibility distortion; $T_2^*$ decay along the long echo train blurs; odd/even echo mismatches cause Nyquist (N/2) ghosts. → [[H2]], [[I2]]
+
+</details>
+
+**Q12.7** What does it mean to use balanced steady-state free precession (bSSFP)?
+* (a) multiple spin echoes following a single excitation  (b) multiple k-space lines acquired sequentially  (c) multiple gradient-echo repetitions after a magnetization preparation pulse  (d) fully refocused gradients and no spoiling in every TR
+
+<details><summary>Answer</summary>
+
+**(d).** → [[H2]]
+
+</details>
+
+<<<md>>>
+## 13. Accelerated imaging methods
+
+**Q13.1** Match the acceleration methods — partial Fourier, parallel imaging, compressed sensing, deep learning — with the concept they rely on: conjugate symmetry in k-space; spatial encoding from receive-coil arrays; a sparse representation of the image; training on prior images to learn expected patterns.
+
+<details><summary>Answer</summary>
+
+Partial Fourier ↔ conjugate symmetry · Parallel imaging ↔ coil-array spatial encoding · Compressed sensing ↔ sparsity · Deep learning ↔ training on prior images. → [[H3]]
+
+</details>
+
+**Q13.2** (T/F) Partial Fourier, parallel imaging, and compressed sensing or deep-learning reconstructions can be used simultaneously.
+
+<details><summary>Answer</summary>
+
+**True.** They exploit different redundancies and are routinely combined (e.g. $\ell_1$-ESPIRiT, or DL reconstructions of partial-Fourier, parallel-imaging data). → [[H3]], [[J5]]
+
+</details>
+
+**Q13.3** How is coil-sensitivity information gathered for parallel imaging?
+* (a) it is stored in a database on the scanner  (b) a separate scan to measure coil-sensitivity maps  (c) using fully sampled data from the centre of k-space  (d) using fully sampled data from outer k-space
+
+<details><summary>Answer</summary>
+
+**(b) and (c).** SENSE-type methods typically use a fast low-resolution reference scan; auto-calibrating methods (GRAPPA, ESPIRiT) use fully sampled lines at the k-space centre. Sensitivities depend on the patient (loading, position), so a database (a) does not work; coil profiles are smooth, so the low spatial frequencies (centre), not outer k-space, carry them. → [[H3]]
+
+</details>
+
+**Q13.4** What is the "g-factor" in parallel imaging?
+* (a) how much faster a scan can be performed  (b) describes noise amplification  (c) describes SNR loss  (d) describes magnetic field gradients
+
+<details><summary>Answer</summary>
+
+**(b) and (c).** The geometry factor $g(\vec r)\ge1$ is the spatially varying noise amplification of the unfolding, which is an SNR loss on top of the $\sqrt R$ from reduced sampling. The speed-up is $R$, not $g$. → [[H3]]
+
+</details>
+
+**Q13.5** Compared to the SNR of a fully sampled acquisition ($SNR_{full}$), the SNR of a parallel imaging acquisition with acceleration factor $R$ and g-factor $g$ is …
+* (a) $SNR_{full}$  (b) $SNR_{full}/\sqrt R$  (c) $SNR_{full}/g(\vec r)$  (d) $SNR_{full}/(g(\vec r)\sqrt R)$
+
+<details><summary>Answer</summary>
+
+**(d).** → [[H3]]
+
+</details>
+
+**Q13.6** (T/F) Parallel-imaging undersampling can be performed in any direction, regardless of the RF coil configuration.
+
+<details><summary>Answer</summary>
+
+**False.** Unfolding needs the coil sensitivities to *differ along the undersampled direction*; with no variation in that direction the problem is ill-conditioned (huge g-factor). → [[H3]]
+
+</details>
+
+**Q13.7** Simultaneous multi-slice parallel imaging …
+* (a) enables acceleration in the slice direction  (b) requires no modifications to the pulse sequence  (c) requires RF pulses that excite multiple slices  (d) requires coil-sensitivity information
+
+<details><summary>Answer</summary>
+
+**(a), (c) and (d).** It needs multiband RF pulses (and usually CAIPIRINHA phase cycling/blips), so (b) is false. → [[H3]]
+
+</details>
+
+**Q13.8** What type of k-space sampling is required for compressed sensing?
+* (a) full sampling  (b) equally spaced undersampling  (c) equally spaced undersampling with fully sampled centre  (d) pseudo-random undersampling
+
+<details><summary>Answer</summary>
+
+**(d)** — typically variable-density pseudo-random, denser near the centre, so that aliasing becomes incoherent, noise-like and removable by sparsity. → [[H3]]
+
+</details>
+
+**Q13.9** At least how many training datasets are typically required to develop deep-learning MRI reconstruction methods?
+* (a) 1  (b) 10–100  (c) 1000–10,000  (d) 100,000–1,000,000
+
+<details><summary>Answer</summary>
+
+**(c) 1000–10,000** for typical supervised training (e.g. the fastMRI datasets contain thousands of exams). Physics-based unrolled networks need fewer than pure image-to-image networks, and research methods exist that learn from a single scan (self-supervised/scan-specific), but those are not the typical case. → [[H3]], [[J5]]
+
+</details>
+
+**Q13.10** Generalization problems can arise in deep-learning MRI reconstruction when applied to situations that are different from the training data in which of the following ways?
+* (a) different anatomy  (b) different contrasts  (c) different sampling patterns  (d) different $B_0$
+
+<details><summary>Answer</summary>
+
+**All four.** Any mismatch in the data distribution (anatomy, contrast, sampling/acceleration, field strength and thus SNR and artifacts) can degrade performance or cause hallucinations. → [[H3]]
+
+</details>
+
+**Q13.11** Which type of architecture is commonly used for physics-based deep-learning MRI reconstruction networks?
+* (a) encoder–decoder  (b) U-Net  (c) unrolled  (d) recurrent
+
+<details><summary>Answer</summary>
+
+**(c) unrolled** (e.g. variational networks, MoDL), which alternate data-consistency steps using the physical encoding model with learned regularizers. The learned block inside is often a U-Net or ResNet. → [[J5]]
+
+</details>
+
+<<<md>>>
+## 14. Extra questions — hardware and engineering
+
+**Q14.1** A gradient system has $G_{max}=40$ mT/m and slew rate $SR=200$ T/m/s. What is the minimum time to ramp from 0 to $G_{max}$?
+
+<details><summary>Answer</summary>
+
+$t_{rise}=G_{max}/SR=0.04/200=0.2$ ms. This ramp time is why real gradient waveforms are trapezoids, and why EPI echo spacing cannot be arbitrarily short. → [[B4]]
+
+</details>
+
+**Q14.2** Why is the slew rate in clinical scanners limited to ~200 T/m/s even though stronger amplifiers could be built?
+
+<details><summary>Answer</summary>
+
+Mainly **peripheral nerve stimulation**: a fast-changing field induces electric fields in the body ($\mathcal E\propto dB/dt$) that can stimulate nerves; limits are set at a fraction of the PNS threshold. Amplifier voltage is the other limit: $V=L\,dI/dt+RI$ with coil inductance ~1 mH and ~900 A. → [[B4]], [[B6]]
+
+</details>
+
+**Q14.3** What is a quench, and why must a scanner have a quench pipe?
+
+<details><summary>Answer</summary>
+
+A quench is the sudden loss of superconductivity in the magnet windings. The stored magnetic energy (several MJ) turns into heat and boils off the liquid helium within seconds; ~1 L of liquid becomes ~700 L of gas, which would displace the oxygen in the room, so it must be vented outside. → [[B3]], [[B6]]
+
+</details>
+
+**Q14.4** An RF receive loop has inductance $L=100$ nH. Which capacitance tunes it to 3 T (127.7 MHz)? (Compute it in the cell below.)
+
+<details><summary>Answer</summary>
+
+$C=1/\left((2\pi f_0)^2L\right)\approx15.5$ pF. In practice the capacitance is split into several capacitors around the loop and fine-tuned with a trimmer; matching networks transform the coil impedance to 50 Ω. → [[B5]], [[RP2]]
+
+</details>
+
+<<<code>>>
+L = 100e-9                                   # coil inductance [H]
+f0 = mt.larmor_frequency(3.0)                # [Hz]
+C = 1 / ((2 * np.pi * f0) ** 2 * L)          # resonance condition f0 = 1/(2 pi sqrt(LC))
+print(f"f0 = {f0/1e6:.2f} MHz  ->  C = {C*1e12:.1f} pF")
+
+<<<md>>>
+**Q14.5** Why is RF transmit field inhomogeneity ("dielectric shading") much worse at 7 T than at 1.5 T?
+
+<details><summary>Answer</summary>
+
+The RF wavelength in tissue $\lambda=c/(f_0\sqrt{\varepsilon_r})$ shrinks with frequency: with $\varepsilon_r\approx50$–$80$ it is ≈ 50 cm at 64 MHz, ≈ 30 cm at 128 MHz and ≈ 13 cm at 298 MHz — comparable to or smaller than the head/body, so standing-wave interference creates bright and dark regions. Remedies: dielectric pads, parallel transmission, adiabatic pulses. → [[B5]], [[I2]]
+
+</details>
+
+**Q14.6** By how much does SAR increase if you go from 1.5 T to 3 T with the same sequence (same flip angles and timing)?
+
+<details><summary>Answer</summary>
+
+About **4×**: the $B_1$ amplitude needed for a given flip angle is field-independent, but the induced electric fields scale with frequency, so absorbed power scales ≈ with $f_0^2\propto B_0^2$. This is why 3 T protocols often reduce flip angles or ETL, or lengthen TR. → [[B6]], [[E1]]
+
+</details>
+
+**Q14.7** Why does each receive-coil element have its own low-noise preamplifier mounted directly on the coil, and what is "preamplifier decoupling"?
+
+<details><summary>Answer</summary>
+
+Every component before the first amplifier (cables, connectors) adds loss and noise directly to the weak signal, so the LNA (noise figure < 0.5 dB) must come first. Its very low input impedance, transformed through the matching network, blocks current in the element; with little current flowing, neighbouring elements hardly couple magnetically. That is preamplifier decoupling, used alongside geometric overlap decoupling. → [[B5]]
+
+</details>
+
+<<<md>>>
+## 15. Extra questions — math and notation
+
+**Q15.1** What is the difference between $\gamma$ and $\bar\gamma$, and which one appears in (i) the flip angle $\theta=\ldots\int b_1dt$ and (ii) the k-space formula $\vec k=\ldots\int\vec G\,dt$?
+
+<details><summary>Answer</summary>
+
+$\gamma=2.675\times10^8$ rad s⁻¹ T⁻¹ (angular), $\bar\gamma=\gamma/2\pi=42.58$ MHz/T (cycles). (i) The flip angle in radians uses $\gamma$. (ii) k-space in cycles/m uses $\bar\gamma$ (the original writes $\frac{\gamma}{2\pi}$, which is the same thing). → [[Notation]]
+
+</details>
+
+**Q15.2** With our convention $M_{xy}(t)=M_{xy}(0)e^{-i\omega t}$, what phase does a spin at off-resonance $\Delta f=+50$ Hz accumulate in 10 ms?
+
+<details><summary>Answer</summary>
+
+$\phi=-2\pi\Delta f\,t=-2\pi\cdot50\cdot0.01=-\pi$ rad, i.e. half a turn clockwise. Its signal is then opposite to an on-resonant spin — the same idea as fat/water opposed-phase imaging. → [[A2]], [[RM2]]
+
+</details>
+
+**Q15.3** Name three different meanings of the symbol $\delta$ in this course, and how to tell them apart.
+
+<details><summary>Answer</summary>
+
+Spatial resolution $\delta$ (m, e.g. $\delta_x$); Dirac delta $\delta(x)$ (always has an argument); chemical shift $\delta_{cs}$ in ppm (subscript $cs$). (Also SLR ripples $\delta_1,\delta_2$.) → [[Notation]]
+
+</details>
+
+**Q15.4** The FT of $\mathrm{rect}(x/W)$ is $W\,\mathrm{sinc}(Wk)$. A slice profile is (approximately) the FT of the RF envelope. If you make a sinc pulse twice as long (same number of lobes), what happens to its bandwidth and to the slice thickness at fixed gradient?
+
+<details><summary>Answer</summary>
+
+The scaling property says stretching in time compresses in frequency: the bandwidth halves ($TBW$ is constant), so at the same gradient the slice becomes **half as thick** ($\Delta z=BW_{rf}/(\bar\gamma G_{z,SS})$). → [[RM4]], [[E2]]
+
+</details>
+
+**Q15.5** Multiplying k-space data by a window $W(\vec k)$ does what to the image? Use the convolution theorem.
+
+<details><summary>Answer</summary>
+
+The image is **convolved** with the window's inverse FT, $h=\mathcal F^{-1}\{W\}$ (the point spread function): $\hat m=m*h$. A smooth window has a PSF with weaker side lobes (less ringing) but a wider main lobe (blur). → [[RM4]], [[I1]]
+
+</details>
+
+**Q15.6** Why is $T_1$ called a *time constant* and not a *rate*? Give the rate and its unit for $T_1=1.2$ s.
+
+<details><summary>Answer</summary>
+
+$T_1$ is the time scale of the exponential $e^{-t/T_1}$ (unit s). The rate is $R_1=1/T_1\approx0.83$ s⁻¹. Contrast agents add linearly to *rates*: $R_1=R_{1,0}+r_1[CM]$. (The original notation table mislabelled $T_1,T_2$ as rates.) → [[Notation]], [[D2]]
+
+</details>
+
+<<<code>>>
+# Numerical check of Q15.4: doubling a sinc pulse's duration halves its bandwidth
+dt = 1e-6
+for T_rf in [2e-3, 4e-3]:
+    t = np.arange(-T_rf / 2, T_rf / 2, dt)
+    b1 = mt.sinc(4 * t / T_rf)                       # TBW = 4 sinc (2 zero crossings on each side)
+    spec = np.abs(np.fft.fftshift(np.fft.fft(b1, 2**16)))
+    f = np.fft.fftshift(np.fft.fftfreq(2**16, dt))
+    above = f[spec > spec.max() / 2]
+    print(f"T_rf = {T_rf*1e3:.0f} ms: FWHM bandwidth = {above.max() - above.min():.0f} Hz "
+          f"(TBW = {(above.max() - above.min()) * T_rf:.1f})")
+
+<<<md>>>
+Interpretation: doubling the duration halves the bandwidth (≈ 1900 → 950 Hz), keeping the time–bandwidth product fixed (≈ 3.8 measured at half maximum, nominally 4).
+
+<<<md>>>
+## Key takeaways
+
+* Many MRI questions have several correct answers — reason from the governing equations ($f=\bar\gamma B$, $\vec k=\bar\gamma\int\vec G$, $FOV=1/\Delta k$, $SNR\propto$ voxel·$\sqrt{T_{meas}}$) rather than memorizing.
+* Watch the units and conventions: radians vs cycles ($\gamma$ vs $\bar\gamma$), time constants vs rates, sign of exponents.
+* Hardware sets the hard limits: slew rate/PNS, SAR ∝ $B_0^2$, RF wavelength at high field, helium and quench safety.
+
+<<<md>>>
+---
+*Adapted and extended from P. Larson, "Principles of MRI" (MIT License), chapter "Questions".
+Changes: all original questions kept and grouped; added collapsible answers with explanations and chapter links, three numerical checks, and 13 new questions on hardware/engineering and math/notation; flagged typos in the original options (missing minus signs in exponents, "(T/R)").*

@@ -1,0 +1,170 @@
+<<<md>>>
+# MRI — from intuition to engineering
+
+**Start here.** This folder is a self-contained course on how magnetic resonance imaging (MRI) works. It covers the physics, the mathematics, and the hardware and engineering that make a scanner work.
+
+It is an adaptation and extension of Peder Larson's open textbook [*Principles of MRI*](https://larsonlab.github.io/MRI-education-resources) (MIT License). The original is excellent but assumes a physics or engineering background: many symbols are used without definition, and steps in derivations are skipped. This version:
+
+* **defines every symbol** in each notebook (a symbol table at the top of every chapter, plus a [master notation reference](reference/Notation_and_Symbols.ipynb)),
+* follows each equation with an **"in words"** explanation and its units,
+* adds missing derivations as **optional, collapsible blocks**,
+* adds **hardware and engineering chapters** (magnet, gradients, RF chain, safety),
+* ports all of the book's Octave/MATLAB code to **runnable Python**, and
+* adds optional **refresher notebooks** for the math and physics background.
+
+<<<md>>>
+## How the course is organised: two passes
+
+The course deliberately does **not** climb slowly from "easy" to "hard" in one long line. It goes over the whole subject **twice**:
+
+| | Pass 1 — the big picture | Pass 2 — the deep dive |
+|---|---|---|
+| Goal | Have the *whole map* of MRI in your head: physics, scanner, image formation, contrast, speed, artifacts, safety | Revisit every topic rigorously: derivations, simulations, hardware details, engineering trade-offs |
+| Math | Minimal; every symbol still defined | Full; each step explained, with links to refreshers |
+| Length | 5 notebooks, ~30–45 min each | 34 chapters in 10 parts (A–J) |
+| Folder | `pass1_big_picture/` | `pass2_deep_dive/` |
+
+The idea: in Pass 2 you always know *why* a detail matters, because Pass 1 has already shown you where it fits.
+
+**Refreshers** (`refreshers/`) are optional side trips. A chapter links to one exactly where you need it. **Reference** notebooks (`reference/`) are for looking things up: notation, glossary, key equations, practice questions.
+
+<<<md>>>
+## Which refreshers do you need? (a 3-minute self-check)
+
+Try to answer each question in your head. If you hesitate, the linked refresher is worth 15–30 minutes **before** (or while) reading the Pass-2 chapters that need it. You can also just start, and follow 🔁 links as they appear.
+
+| If this question makes you hesitate… | …read this refresher | Used heavily in |
+|---|---|---|
+| Solve $\frac{dy}{dt} = -\frac{y}{\tau}$ and $\frac{dy}{dt} = \frac{y_{eq}-y}{\tau}$. What do the solutions look like? | [RM1 — ODEs for MRI](refreshers/RM1_ODEs_for_MRI.ipynb) | A2 Bloch equation, D1 contrast |
+| Why does $e^{-i\omega t}$ describe a *clockwise* rotation, and what happens when you add 1000 unit phasors with random phases? | [RM2 — Complex numbers & rotations](refreshers/RM2_Complex_Numbers_and_Rotations.ipynb) | A2, D2/D3 ($T_2^*$, echoes) |
+| How does the integral $F(k)=\int f(x)e^{-i2\pi kx}dx$ relate to `np.fft.fft`, and why do we need `fftshift`? | [RM3 — Continuous FT ↔ DFT](refreshers/RM3_Continuous_FT_and_DFT.ipynb) | C2, F1–F3 |
+| What does a *shift* in $x$ do to the Fourier transform? What is the transform of a product? | [RM4 — Fourier properties](refreshers/RM4_Fourier_Properties.ipynb) | E2 slice offsets, I1 PSF, H3 partial Fourier |
+| What is the FT of a rectangle? What happens to the spectrum when you sample a signal? | [RM5 — Fourier pairs & sampling](refreshers/RM5_Fourier_Pairs_and_Sampling.ipynb) | E1 RF pulses, G1 FOV & resolution, I2 artifacts |
+| In the 2D FFT of a photo, where are the edges and where is the overall brightness? | [RM6 — 2D Fourier & images](refreshers/RM6_2D_Fourier_and_Images.ipynb) | F2 k-space |
+| What magnetic field does a current loop produce, and why is a long solenoid's field uniform inside? | [RP1 — Magnetism from currents](refreshers/RP1_Magnetism_from_Currents.ipynb) | B2–B4 hardware |
+| Why does a rotating magnet near a coil produce a voltage? What is an LC resonance? | [RP2 — Induction & RF](refreshers/RP2_Induction_and_RF.ipynb) | B5 RF chain, C2 signal, G2 SNR |
+| Why does a spinning top *precess* instead of falling over? | [RP3 — Precession & torque](refreshers/RP3_Precession_and_Torque.ipynb) | A1, A2 |
+| What is a nuclear spin, and why are only ~10 in a million protons "useful" at 3 T? | [RP4 — Spin & thermal statistics](refreshers/RP4_Spin_and_Thermal_Statistics.ipynb) | A1, G2 |
+
+<<<md>>>
+## Course map
+
+### Pass 1 — the big picture
+
+| # | Notebook | What you get |
+|---|---|---|
+| P1.1 | [What MRI measures](pass1_big_picture/P1.1_What_MRI_Measures.ipynb) | Spins, magnetization, resonance, excitation, relaxation, the signal |
+| P1.2 | [The MRI scanner](pass1_big_picture/P1.2_The_MRI_Scanner.ipynb) | Magnet, gradients, RF coils, electronics, with real numbers and engineering limits |
+| P1.3 | [From signal to image](pass1_big_picture/P1.3_From_Signal_to_Image.ipynb) | Pulse sequences, slice selection, frequency and phase encoding, k-space |
+| P1.4 | [Contrast and image quality](pass1_big_picture/P1.4_Contrast_and_Image_Quality.ipynb) | T1/T2/PD weighting, SNR, resolution, scan-time trade-offs |
+| P1.5 | [Speed, artifacts and safety](pass1_big_picture/P1.5_Speed_Artifacts_and_Safety.ipynb) | Fast imaging, acceleration, artifacts, safety, and a map of Pass 2 |
+
+### Pass 2 — the deep dive
+
+| Part | Chapters |
+|---|---|
+| **A — Magnetic resonance physics** | [A1 Spin physics](pass2_deep_dive/A1_Spin_Physics.ipynb) · [A2 Bloch equation](pass2_deep_dive/A2_Bloch_Equation.ipynb) · [A3 In vivo spin physics](pass2_deep_dive/A3_In_Vivo_Spin_Physics.ipynb) |
+| **B — The MRI system (hardware & engineering)** | [B1 MRI system](pass2_deep_dive/B1_MRI_System.ipynb) · [B2 Magnetic fields in MRI](pass2_deep_dive/B2_Magnetic_Fields_in_MRI.ipynb) · [B3 Main magnet engineering](pass2_deep_dive/B3_Main_Magnet_Engineering.ipynb) · [B4 Gradient system engineering](pass2_deep_dive/B4_Gradient_System_Engineering.ipynb) · [B5 RF system & receive chain](pass2_deep_dive/B5_RF_System_and_Receive_Chain.ipynb) · [B6 MRI safety](pass2_deep_dive/B6_MRI_Safety.ipynb) |
+| **C — The MRI experiment** | [C1 Pulse sequence](pass2_deep_dive/C1_Pulse_Sequence.ipynb) · [C2 MRI signal equation](pass2_deep_dive/C2_MRI_Signal_Equation.ipynb) |
+| **D — Contrast** | [D1 Basic contrast mechanisms](pass2_deep_dive/D1_Basic_Contrast_Mechanisms.ipynb) · [D2 In vivo contrast mechanisms](pass2_deep_dive/D2_In_Vivo_Contrast_Mechanisms.ipynb) · [D3 Gradient and spin echoes](pass2_deep_dive/D3_Gradient_and_Spin_Echoes.ipynb) · [D4 Image contrast examples](pass2_deep_dive/D4_Image_Contrast_Examples.ipynb) |
+| **E — Radiofrequency pulses** | [E1 RF pulses](pass2_deep_dive/E1_RF_Pulses.ipynb) · [E2 Slice selection](pass2_deep_dive/E2_Slice_Selection.ipynb) · [E3 RF pulse design](pass2_deep_dive/E3_RF_Pulse_Design.ipynb) |
+| **F — Image formation** | [F1 Spatial encoding](pass2_deep_dive/F1_Spatial_Encoding.ipynb) · [F2 K-space](pass2_deep_dive/F2_K-space.ipynb) · [F3 Image reconstruction](pass2_deep_dive/F3_Image_Reconstruction.ipynb) |
+| **G — Image characteristics** | [G1 FOV and resolution](pass2_deep_dive/G1_FOV_and_Resolution.ipynb) · [G2 Signal-to-noise ratio](pass2_deep_dive/G2_Signal_to_Noise_Ratio.ipynb) · [G3 Cartesian image characteristics](pass2_deep_dive/G3_Cartesian_Image_Characteristics.ipynb) |
+| **H — Fast imaging** | [H1 Volumetric imaging](pass2_deep_dive/H1_Volumetric_Imaging.ipynb) · [H2 Fast imaging pulse sequences](pass2_deep_dive/H2_Fast_Imaging_Pulse_Sequences.ipynb) · [H3 Accelerated imaging methods](pass2_deep_dive/H3_Accelerated_Imaging_Methods.ipynb) |
+| **I — Imperfections & artifacts** | [I1 Point spread function analysis](pass2_deep_dive/I1_Point_Spread_Function_Analysis.ipynb) · [I2 Artifacts](pass2_deep_dive/I2_Artifacts.ipynb) |
+| **J — Advanced & fun topics** | [J1 Excitation k-space](pass2_deep_dive/J1_Excitation_K-space.ipynb) · [J2 Spectral-spatial RF pulses](pass2_deep_dive/J2_Spectral-Spatial_RF_Pulses.ipynb) · [J3 Fun with RF pulses](pass2_deep_dive/J3_Fun_with_RF_Pulses.ipynb) · [J4 Advanced SNR](pass2_deep_dive/J4_Advanced_SNR.ipynb) · [J5 Advanced image reconstruction](pass2_deep_dive/J5_Advanced_Image_Reconstruction.ipynb) |
+
+### Refreshers (optional)
+
+| Math | Physics |
+|---|---|
+| [RM1 ODEs for MRI](refreshers/RM1_ODEs_for_MRI.ipynb) | [RP1 Magnetism from currents](refreshers/RP1_Magnetism_from_Currents.ipynb) |
+| [RM2 Complex numbers & rotations](refreshers/RM2_Complex_Numbers_and_Rotations.ipynb) | [RP2 Induction & RF](refreshers/RP2_Induction_and_RF.ipynb) |
+| [RM3 Continuous FT ↔ DFT](refreshers/RM3_Continuous_FT_and_DFT.ipynb) | [RP3 Precession & torque](refreshers/RP3_Precession_and_Torque.ipynb) |
+| [RM4 Fourier properties](refreshers/RM4_Fourier_Properties.ipynb) | [RP4 Spin & thermal statistics](refreshers/RP4_Spin_and_Thermal_Statistics.ipynb) |
+| [RM5 Fourier pairs & sampling](refreshers/RM5_Fourier_Pairs_and_Sampling.ipynb) | |
+| [RM6 2D Fourier & images](refreshers/RM6_2D_Fourier_and_Images.ipynb) | |
+
+### Reference
+
+[Notation & symbols](reference/Notation_and_Symbols.ipynb) · [Glossary & acronyms](reference/Glossary_and_Acronyms.ipynb) · [MRI math concepts (cheat sheet)](reference/MRI_Math_Concepts.ipynb) · [Key MRI concepts (equation summary)](reference/Key_MRI_Concepts.ipynb) · [Practice questions with answers](reference/Questions.ipynb) · [Software resources](reference/Software_Resources.ipynb)
+
+<<<md>>>
+## Suggested reading paths
+
+* **The full course (recommended):** Pass 1 (P1.1 → P1.5), then Pass 2 in order A → I. Part J is optional.
+* **Hardware and engineering focus:** P1.1, P1.2 → A1, A2 → B1–B6 → C2 → E1, E2 → G2 → H3 → I2.
+* **Math and signal-processing focus:** P1.1, P1.3 → A2 → C2 → E1, E2 → F1–F3 → G1, G2 → I1 → H3 → J1, J5.
+* **"How do I read a clinical image?" focus:** P1.1, P1.4, P1.5 → D1–D4 → H2 → I2.
+
+<<<md>>>
+## Conventions used everywhere
+
+You only need to know four things up front. The [notation reference](reference/Notation_and_Symbols.ipynb) has everything else.
+
+1. **SI units in the code**: seconds, tesla, hertz, metres. The text often says "ms", "mT" or "MHz" for readability, and the code converts explicitly.
+2. **Two gyromagnetic ratios**: $\bar\gamma = 42.58$ MHz/T (hertz per tesla) and $\gamma = 2\pi\bar\gamma \approx 2.675\times10^8$ rad s⁻¹ T⁻¹. Mixing them up is the most common source of stray factors of $2\pi$.
+3. **Precession is clockwise** (left-handed): a transverse magnetization written as a complex number, $M_{xy}=M_x+iM_y$, evolves as $M_{xy}(t)=M_{xy}(0)\,e^{-i\omega t}$.
+4. **Fourier transform convention**: $F(k)=\int f(x)\,e^{-i2\pi kx}\,dx$, with $k$ in cycles per metre.
+
+The colour-coded boxes in the chapters mean:
+
+> **🧭 Intuition:** a picture or analogy to hold on to.
+
+> **🔧 Engineering reality:** what limits this in a real scanner (specs, cost, safety).
+
+> **⚠️ Common confusion:** a trap that many learners fall into.
+
+> **📐 Math note:** a mathematical detail or shortcut.
+
+> **🔁 Refresher:** a link to background material.
+
+<details><summary><b>📐 Collapsible blocks like this one</b> hold optional derivations</summary>
+
+Click to open them when you want the full mathematical story. Skip them on a first read.
+
+</details>
+
+<<<md>>>
+## Running the notebooks
+
+All notebooks are stored **already executed**, so you can read them, plots included, without running anything. To experiment, run them in a Python environment with `numpy`, `scipy`, `matplotlib` and (optionally) `ipywidgets`. The `GestureDetection` conda environment on this machine already has all of these:
+
+```bash
+conda activate GestureDetection
+cd ~/Documents/other/mri
+jupyter lab            # then open 00_Start_Here.ipynb
+```
+
+(Or create a fresh environment from `environment.yml`: `conda env create -f environment.yml && conda activate mri-course`.)
+
+Every notebook imports the shared helper module [`mri_tools.py`](mri_tools.py), which contains the Bloch simulator, rotations, centred FFTs, phantoms, signal equations and coil-field calculations. Reading its top-of-file docstring is a good 5-minute investment. The cell below checks that your environment works:
+
+<<<code>>>
+import sys, os
+sys.path.insert(0, os.path.abspath("."))   # mri_tools.py lives in this folder
+import numpy as np
+import matplotlib.pyplot as plt
+import mri_tools as mt
+mt.setup_plots()
+%matplotlib inline
+
+print(f"Python {sys.version.split()[0]}, numpy {np.__version__}")
+for B0 in (0.55, 1.5, 3.0, 7.0):
+    print(f"B0 = {B0:4.2f} T  ->  1H Larmor frequency f0 = {mt.larmor_frequency(B0)/1e6:6.2f} MHz")
+
+# A first taste: magnetization tipped by 90 degrees, then precessing and relaxing
+# (rotating frame, 20 Hz off-resonance, T1 = 1 s, T2 = 100 ms)
+t, M = mt.bloch_simulate(n_steps=400, dt=1e-3, M_init=[0, 1, 0], T1=1.0, T2=0.1, df=20)
+fig, ax = plt.subplots(figsize=(8, 3.5))
+mt.plot_magnetization(t, M, ax=ax, components="xyza",
+                      title="After a 90° pulse: precession (Mx, My), T2 decay of |Mxy|, T1 recovery of Mz")
+plt.show()
+
+<<<md>>>
+In the plot, $M_x$ and $M_y$ oscillate (precession at 20 Hz relative to the rotating frame) inside a decaying envelope $|M_{xy}|$ ($T_2$ = 100 ms), while $M_z$ slowly grows back toward 1 ($T_1$ = 1 s). By the end of Pass 1 every word in that sentence will be familiar, and by the end of Pass 2 you will be able to derive it.
+
+**Next:** [P1.1 — What MRI measures](pass1_big_picture/P1.1_What_MRI_Measures.ipynb)
+
+---
+*Adapted and extended from P. Larson, "Principles of MRI", https://github.com/LarsonLab/MRI-education-resources (MIT License; see `LICENSE_original_MIT.txt`). Original images and data are reused under that license.*

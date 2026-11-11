@@ -1,0 +1,13 @@
+<<<md>>>
+# Test $\vec M$ and ![x](../images/RF_reception.gif) and [A2](../pass2_deep_dive/A2_Bloch_Equation.ipynb)
+<<<code>>>
+import sys, os
+sys.path.insert(0, os.path.abspath(".."))
+import numpy as np
+import matplotlib.pyplot as plt
+import mri_tools as mt
+mt.setup_plots()
+%matplotlib inline
+print(sys.executable)
+t, M = mt.bloch_simulate(n_steps=50, dt=1e-3, M_init=[1,0,0], T2=0.02, df=20)
+mt.plot_magnetization(t, M); plt.show()

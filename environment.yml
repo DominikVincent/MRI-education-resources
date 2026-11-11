@@ -1,2 +1,12 @@
+# Optional: a fresh environment for this course.
+# (The existing "GestureDetection" conda env on this machine already has everything.)
+name: mri-course
+channels:
+  - conda-forge
 dependencies:
-- octave_kernel
+  - python=3.11
+  - numpy
+  - scipy
+  - matplotlib
+  - ipywidgets
+  - jupyterlab

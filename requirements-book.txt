@@ -1,0 +1,2 @@
+# Only needed to build the web book (notebooks are stored already executed)
+jupyter-book<2
