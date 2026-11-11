@@ -1,6 +1,6 @@
 # Builds the Jupyter Book and publishes it to GitHub Pages.
 # One-time setup: repository Settings -> Pages -> Source: "GitHub Actions".
-name: deploy-book
+name: pages
 
 on:
   push:
@@ -11,10 +11,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
   build:
